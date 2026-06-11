@@ -51,6 +51,9 @@
         <action
             android:id="@+id/action_homeFragment_to_productDetailFragment"
             app:destination="@id/productDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_favoritesFragment"
+            app:destination="@id/favoritesFragment" />
     </fragment>
     <fragment
         android:id="@+id/sellerFragment"
@@ -78,4 +81,13 @@
             android:name="product"
             app:argType="com.example.nexcart.domain.model.Product" />
     </fragment>
-</navigation>
+    <fragment
+        android:id="@+id/favoritesFragment"
+        android:name="com.example.nexcart.ui.favorites.FavoritesFragment"
+        android:label="My Favourites"
+        tools:layout="@layout/fragment_favorites" >
+        <action
+            android:id="@+id/action_favoritesFragment_to_productDetailFragment"
+            app:destination="@id/productDetailFragment" />
+    </fragment>
+</navigation>

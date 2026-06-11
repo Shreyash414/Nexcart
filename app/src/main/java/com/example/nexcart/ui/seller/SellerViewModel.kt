@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.nexcart.domain.model.Product
 import com.example.nexcart.domain.repository.AuthRepository
 import com.example.nexcart.domain.repository.ProductRepository
+import com.example.nexcart.domain.usecase.product.GetRecommendedProductsUseCase
 import com.example.nexcart.utils.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,11 +17,15 @@ import javax.inject.Inject
 @HiltViewModel
 class SellerViewModel @Inject constructor(
     private val productRepository: ProductRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val getRecommendedProductsUseCase: GetRecommendedProductsUseCase
 ) : ViewModel() {
 
     private val _sellerProducts = MutableStateFlow<UiState>(UiState.Loading)
     val sellerProducts: StateFlow<UiState> = _sellerProducts
+
+    private val _recommendedProducts = MutableStateFlow<UiState>(UiState.Idle)
+    val recommendedProducts: StateFlow<UiState> = _recommendedProducts.asStateFlow()
 
     private val _categories = MutableStateFlow<List<String>>(emptyList())
     val categories: StateFlow<List<String>> = _categories.asStateFlow()
@@ -33,6 +38,19 @@ class SellerViewModel @Inject constructor(
 
     init {
         loadSellerProducts()
+        loadRecommendedProducts()
+    }
+
+    private fun loadRecommendedProducts() {
+        viewModelScope.launch {
+            try {
+                _recommendedProducts.value = UiState.Loading
+                val products = getRecommendedProductsUseCase()
+                _recommendedProducts.value = UiState.Success(products)
+            } catch (e: Exception) {
+                _recommendedProducts.value = UiState.Error(e.localizedMessage ?: "Could not load recommendations")
+            }
+        }
     }
 
     fun loadSellerProducts() {

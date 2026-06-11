@@ -22,6 +22,9 @@ import java.io.FileOutputStream
 import java.util.UUID
 import javax.inject.Inject
 
+private const val MIN_IMAGES = 3
+private const val MAX_IMAGES = 5
+
 @HiltViewModel
 class AddProductViewModel @Inject constructor(
     private val productRepository: ProductRepository,
@@ -40,9 +43,8 @@ class AddProductViewModel @Inject constructor(
         price: String,
         category: String,
         description: String,
-        imageUri: Uri?
+        imageUris: List<Uri>
     ) {
-        // Only Title and Price are strictly mandatory for a professional listing
         if (title.isBlank() || price.isBlank()) {
             viewModelScope.launch {
                 _eventFlow.emit(AddProductEvent.ShowToast("Please enter at least a name and price"))
@@ -58,37 +60,59 @@ class AddProductViewModel @Inject constructor(
             return
         }
 
+        if (imageUris.size < MIN_IMAGES) {
+            viewModelScope.launch {
+                _eventFlow.emit(AddProductEvent.ShowToast("Please add at least $MIN_IMAGES product photos"))
+            }
+            return
+        }
+
         viewModelScope.launch {
             _uploadState.value = UiState.Loading
-            
+
             try {
                 val currentUser = authRepository.getCurrentUser()
                 val sellerId = currentUser?.uid ?: "local_user"
 
-                // 1. Handle optional image
-                val localImageUrl = if (imageUri != null) {
-                    saveImageToInternalStorage(imageUri) ?: ""
-                } else {
-                    ""
+                // 1. Save all images to internal storage first
+                val localPaths = imageUris.mapNotNull { uri ->
+                    saveImageToInternalStorage(uri)
                 }
 
-                // 2. Save Product to Room
+                val productId = UUID.randomUUID().toString()
+
+                // 2. Upload all images to Firebase Storage, collect download URLs
+                val uploadedUrls = localPaths.mapIndexed { index, path ->
+                    val file = File(path)
+                    val uri = Uri.fromFile(file)
+                    try {
+                        val ref = productRepository.getStorageRef("products/${productId}_$index.jpg")
+                        ref?.let {
+                            productRepository.uploadImageAndGetUrl(it, uri)
+                        } ?: path   // fallback to local if storage unavailable
+                    } catch (e: Exception) {
+                        path   // fallback
+                    }
+                }
+
                 val product = Product(
-                    id = UUID.randomUUID().toString(),
+                    id = productId,
                     title = title,
                     price = priceDouble,
                     category = category,
                     description = description,
-                    image = localImageUrl,
+                    image = uploadedUrls.firstOrNull() ?: "",
+                    images = uploadedUrls,
                     sellerId = sellerId
                 )
-                
+
                 productRepository.addProduct(product).onSuccess {
                     _uploadState.value = UiState.Success(Unit)
                     _eventFlow.emit(AddProductEvent.ProductAdded)
                 }.onFailure { e ->
-                    _uploadState.value = UiState.Error(e.message ?: "Failed to save to database")
+                    _uploadState.value = UiState.Error(e.message ?: "Failed to save product")
                 }
+
             } catch (e: Exception) {
                 _uploadState.value = UiState.Error(e.localizedMessage ?: "An unexpected error occurred")
             }
@@ -99,11 +123,8 @@ class AddProductViewModel @Inject constructor(
         return try {
             val fileName = "prod_${UUID.randomUUID()}.jpg"
             val file = File(context.filesDir, fileName)
-            
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                FileOutputStream(file).use { outputStream ->
-                    inputStream.copyTo(outputStream)
-                }
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                FileOutputStream(file).use { output -> input.copyTo(output) }
             }
             file.absolutePath
         } catch (e: Exception) {

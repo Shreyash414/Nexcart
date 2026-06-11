@@ -1,6 +1,8 @@
 package com.example.nexcart.domain.repository
 
+import android.net.Uri
 import com.example.nexcart.domain.model.Product
+import com.google.firebase.storage.StorageReference
 import kotlinx.coroutines.flow.Flow
 
 interface ProductRepository {
@@ -19,4 +21,8 @@ interface ProductRepository {
     suspend fun addFavorite(product: Product)
     suspend fun removeFavorite(product: Product)
     suspend fun isFavorite(productId: String): Boolean
+
+    // Storage helpers (used by AddProductViewModel for multi-image upload)
+    fun getStorageRef(path: String): StorageReference?
+    suspend fun uploadImageAndGetUrl(ref: StorageReference, uri: Uri): String
 }

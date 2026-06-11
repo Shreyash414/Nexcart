@@ -2,6 +2,7 @@ package com.example.nexcart
 
 import android.os.Bundle
 import android.widget.Button
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -70,12 +71,14 @@ class MainActivity : AppCompatActivity() {
         setupSearchBar()
         observeCategories()
         observeAuthEvents()
+        setupBackPressHandler()
+        setupToolbarMenu()
     }
 
     private fun setupNavigationVisibility() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             val isAuthDestination = destination.id == R.id.loginFragment || destination.id == R.id.registerFragment
-            
+
             // Force AppBar to collapse and hide on Auth screens
             if (isAuthDestination) {
                 binding.appBar.setExpanded(false, false)
@@ -83,10 +86,10 @@ class MainActivity : AppCompatActivity() {
             } else {
                 binding.appBar.isVisible = true
             }
-            
+
             // Request inset re-application for the new destination
             ViewCompat.requestApplyInsets(binding.root)
-            
+
             // Also hide Search View if it was open
             if (isAuthDestination) {
                 binding.searchView.hide()
@@ -100,16 +103,16 @@ class MainActivity : AppCompatActivity() {
             sellerViewModel.resetFilters()
             binding.searchBar.setText("")
             binding.searchView.editText.setText("")
-            
+
             val priceSlider = binding.navView.findViewById<RangeSlider>(R.id.price_range_slider)
             priceSlider?.setValues(0f, 1000f)
 
             // Update ChipGroup based on destination
             val chipGroup = binding.navView.findViewById<ChipGroup>(R.id.chip_group_category)
-            if (destination.id == R.id.homeFragment) {
-                updateCategoryChips(chipGroup, viewModel.categories.value)
-            } else if (destination.id == R.id.sellerFragment) {
-                updateCategoryChips(chipGroup, sellerViewModel.categories.value)
+            when (destination.id) {
+                R.id.homeFragment -> updateCategoryChips(chipGroup, viewModel.categories.value)
+                R.id.sellerFragment -> updateCategoryChips(chipGroup, sellerViewModel.categories.value)
+                else -> { /* favoritesFragment and productDetailFragment don't need chips */ }
             }
         }
     }
@@ -117,6 +120,20 @@ class MainActivity : AppCompatActivity() {
     private fun setupToolbar() {
         binding.toolbar.setNavigationOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
+        }
+    }
+
+    private fun setupToolbarMenu() {
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_favorites -> {
+                    if (navController.currentDestination?.id != R.id.favoritesFragment) {
+                        navController.navigate(R.id.favoritesFragment)
+                    }
+                    true
+                }
+                else -> false
+            }
         }
     }
 
@@ -224,8 +241,10 @@ class MainActivity : AppCompatActivity() {
                 authViewModel.authEvent.collect { event ->
                     when (event) {
                         is AuthEvent.NavigateToLogin -> {
+                            // Pop the ENTIRE back stack (clear home/seller/etc.) then go to login.
+                            // Using nav_graph as the root ensures all fragments are cleared.
                             val navOptions = androidx.navigation.NavOptions.Builder()
-                                .setPopUpTo(R.id.loginFragment, true)
+                                .setPopUpTo(R.id.nav_graph, true)
                                 .build()
                             navController.navigate(R.id.loginFragment, null, navOptions)
                         }
@@ -247,13 +266,28 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            binding.drawerLayout.closeDrawer(GravityCompat.START)
-        } else if (binding.searchView.isShowing) {
-            binding.searchView.hide()
-        } else {
-            super.onBackPressed()
-        }
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                when {
+                    binding.drawerLayout.isDrawerOpen(GravityCompat.START) -> {
+                        binding.drawerLayout.closeDrawer(GravityCompat.START)
+                    }
+                    binding.searchView.isShowing -> {
+                        binding.searchView.hide()
+                    }
+                    // On the login screen with nothing behind it → exit the app
+                    navController.currentDestination?.id == R.id.loginFragment
+                            && !navController.navigateUp() -> {
+                        finish()
+                    }
+                    else -> {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
+                }
+            }
+        })
     }
 }

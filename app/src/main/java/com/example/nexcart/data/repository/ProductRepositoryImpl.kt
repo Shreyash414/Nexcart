@@ -187,6 +187,20 @@ class ProductRepositoryImpl @Inject constructor(
         favoriteDao.isFavorite(productId)
     }
 
+    override fun getStorageRef(path: String): StorageReference? {
+        return try {
+            storage.reference.child(path)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    override suspend fun uploadImageAndGetUrl(ref: StorageReference, uri: Uri): String =
+        withContext(Dispatchers.IO) {
+            uploadImageTask(ref, uri)
+            ref.downloadUrl.await().toString()
+        }
+
     private suspend fun uploadImageTask(ref: StorageReference, uri: Uri): UploadTask.TaskSnapshot =
         suspendCancellableCoroutine { continuation ->
             val uploadTask = ref.putFile(uri)

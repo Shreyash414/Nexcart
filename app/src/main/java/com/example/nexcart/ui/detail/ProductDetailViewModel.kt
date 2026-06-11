@@ -3,6 +3,7 @@ package com.example.nexcart.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.nexcart.domain.model.Product
+import com.example.nexcart.domain.model.User
 import com.example.nexcart.domain.repository.AuthRepository
 import com.example.nexcart.domain.repository.ProductRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +22,12 @@ class ProductDetailViewModel @Inject constructor(
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
-    private val _sellerName = MutableStateFlow("")
+    // Holds the full seller User object (null while loading or not found)
+    private val _seller = MutableStateFlow<User?>(null)
+    val seller: StateFlow<User?> = _seller.asStateFlow()
+
+    // Keep for backwards compat / simple observers
+    private val _sellerName = MutableStateFlow("Loading…")
     val sellerName: StateFlow<String> = _sellerName.asStateFlow()
 
     fun checkFavoriteStatus(productId: String) {
@@ -42,11 +48,16 @@ class ProductDetailViewModel @Inject constructor(
     }
 
     fun loadSellerInfo(sellerId: String) {
-        // In a real app, you'd fetch this from Firestore 'users' collection
-        // For now, setting a placeholder or fetching if needed
+        if (sellerId.isBlank()) {
+            _sellerName.value = "Unknown Seller"
+            return
+        }
         viewModelScope.launch {
-            // Simplified: could use authRepository.getUserById(sellerId) if implemented
-            _sellerName.value = "NexCart Seller" 
+            val user = authRepository.getUserById(sellerId)
+            _seller.value = user
+            _sellerName.value = user?.name?.takeIf { it.isNotBlank() }
+                ?: user?.email?.takeIf { it.isNotBlank() }
+                ?: "NexCart Seller"
         }
     }
 }

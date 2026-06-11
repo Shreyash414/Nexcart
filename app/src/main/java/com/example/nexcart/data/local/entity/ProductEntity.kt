@@ -14,6 +14,7 @@ data class ProductEntity(
     val description: String,
     val category: String,
     val image: String,
+    val images: List<String> = emptyList(),
     val rate: Double,
     val ratingCount: Int,
     val sellerId: String
@@ -26,6 +27,7 @@ data class ProductEntity(
             description = description,
             category = category,
             image = image,
+            images = images,
             rating = Rating(rate = rate, count = ratingCount),
             sellerId = sellerId
         )
@@ -40,6 +42,7 @@ data class ProductEntity(
                 description = product.description,
                 category = product.category,
                 image = product.image,
+                images = product.images,
                 rate = product.rating.rate,
                 ratingCount = product.rating.count,
                 sellerId = product.sellerId

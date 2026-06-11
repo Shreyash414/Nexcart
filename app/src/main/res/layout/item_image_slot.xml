@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="110dp"
+    android:layout_height="110dp"
+    android:layout_marginEnd="10dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp">
+
+    <!-- Filled: shows the picked image -->
+    <ImageView
+        android:id="@+id/ivSlotImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone" />
+
+    <!-- Empty: shows the add-photo placeholder -->
+    <LinearLayout
+        android:id="@+id/layoutSlotEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_add_a_photo"
+            app:tint="#7B3FF2" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Add Photo"
+            android:textColor="#7B3FF2"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Remove button (shown only when slot is filled) -->
+    <ImageView
+        android:id="@+id/ivRemoveSlot"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:background="@drawable/circle_white"
+        android:elevation="4dp"
+        android:padding="2dp"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"
+        app:tint="#CC0000" />
+
+</com.google.android.material.card.MaterialCardView>

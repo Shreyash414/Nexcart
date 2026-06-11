@@ -63,7 +63,7 @@ class HomeFragment : Fragment() {
         }
 
         // Recommended Products Adapter
-        recommendedAdapter = ProductAdapter(onProductClick)
+        recommendedAdapter = ProductAdapter(onProductClick, isHorizontal = true)
         binding.rvRecommended.apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = recommendedAdapter
