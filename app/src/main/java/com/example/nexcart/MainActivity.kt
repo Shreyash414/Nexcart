@@ -50,16 +50,18 @@ class MainActivity : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val bottomPadding = maxOf(systemBars.bottom, ime.bottom)
             val currentId = navController.currentDestination?.id
             val isAuth = currentId == R.id.loginFragment || currentId == R.id.registerFragment
             
             if (isAuth) {
                 // Auth screens: No top padding, let content go edge-to-edge
-                v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+                v.setPadding(systemBars.left, 0, systemBars.right, bottomPadding)
                 binding.appBar.setPadding(0, 0, 0, 0)
             } else {
                 // Main screens: Side/bottom padding on container, top padding on AppBar
-                v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
+                v.setPadding(systemBars.left, 0, systemBars.right, bottomPadding)
                 binding.appBar.setPadding(0, systemBars.top, 0, 0)
             }
             insets
