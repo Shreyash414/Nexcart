@@ -1,0 +1,49 @@
+package com.example.nexcart.data.local.entity
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.example.nexcart.domain.model.Product
+import com.example.nexcart.domain.model.Rating
+
+@Entity(tableName = "favorite_products")
+data class FavoriteProductEntity(
+    @PrimaryKey
+    val id: String,
+    val title: String,
+    val price: Double,
+    val description: String,
+    val category: String,
+    val image: String,
+    val rate: Double,
+    val ratingCount: Int,
+    val sellerId: String
+) {
+    fun toDomain(): Product {
+        return Product(
+            id = id,
+            title = title,
+            price = price,
+            description = description,
+            category = category,
+            image = image,
+            rating = Rating(rate = rate, count = ratingCount),
+            sellerId = sellerId
+        )
+    }
+
+    companion object {
+        fun fromDomain(product: Product): FavoriteProductEntity {
+            return FavoriteProductEntity(
+                id = product.id,
+                title = product.title,
+                price = product.price,
+                description = product.description,
+                category = product.category,
+                image = product.image,
+                rate = product.rating.rate,
+                ratingCount = product.rating.count,
+                sellerId = product.sellerId
+            )
+        }
+    }
+}

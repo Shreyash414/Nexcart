@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">NexCart</string>
+    <string name="default_web_client_id">736478260207-331ndllddvdnjplujv5num10648v8nr4.apps.googleusercontent.com</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="theme">Theme</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="filters">Filters</string>
+    <string name="category">Category</string>
+    <string name="price_range">Price Range</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="search_hint">Search items...</string>
+</resources>
